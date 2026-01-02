@@ -1,75 +1,98 @@
-🚦 Spring Kafka Contract Starter
+# 🚦 SPRING KAFKA CONTRACT STARTER
 
-Fail-fast Kafka schema contract enforcement for Spring Boot applications.
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.mathias82.spring.kafka/spring-kafka-contract-starter.svg)](https://repo1.maven.org/maven2/io/github/mathias82/spring/kafka/spring-kafka-contract-starter/0.1.0/)
+[![Website](https://img.shields.io/badge/Website-GitHub%20Pages-black)](https://mathias82.github.io/spring-kafka-contract-demo/)
+[![Build](https://github.com/mathias82/spring-kafka-contract-starter/actions/workflows/build.yml/badge.svg)](https://github.com/mathias82/spring-kafka-contract-starter/actions)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+![Java](https://img.shields.io/badge/Java-17%2B-blue)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-brightgreen)
+![Kafka](https://img.shields.io/badge/Apache%20Kafka-3.x-black)
+![Status](https://img.shields.io/badge/status-stable-brightgreen)
 
-Enforce Kafka data contracts at application startup by validating Schema Registry subjects, compatibility rules, and schema evolution, before broken events reach production.
+**Fail-fast Kafka schema contract enforcement for Spring Boot applications.**
 
-❌ The Problem
+Enforce Kafka data contracts **at application startup** by validating Schema Registry subjects, compatibility rules, and schema evolution — **before broken events reach production**.
 
-Kafka does not enforce data contracts.
+---
+
+## ❌ THE PROBLEM
+
+Kafka **does not enforce data contracts**.
 
 Even when using Schema Registry, applications can still:
 
-- start with missing schema subjects
-- ignore compatibility rules
-- deploy breaking schema changes
-- silently break downstream consumers
+- start with **missing schema subjects**
+- ignore **compatibility rules**
+- deploy **breaking schema changes**
+- silently break **downstream consumers**
 
-In multi-team, event-driven architectures, this leads to:
+In **multi-team, event-driven architectures**, this leads to:
 
 - late failures
 - production incidents
 - broken pipelines
 - loss of trust in Kafka events
 
-Schema Registry stores schemas, but it does not protect you at application startup.
+Schema Registry **stores schemas**, but it **does not protect you at application startup**.
 
-✅ The Solution
+---
 
-Spring Kafka Contract Starter enforces Kafka schema contracts before your application starts.
+## ✅ THE SOLUTION
 
-It acts as a governance guardrail, not another abstraction.
+**Spring Kafka Contract Starter** enforces Kafka schema contracts **before your application starts**.
+
+It acts as a **governance guardrail**, not another Kafka abstraction.
 
 At startup, it validates that:
 
-- required Schema Registry subjects exist
-- compatibility rules are enforced (BACKWARD / FORWARD / FULL)
-- schemas are compatible with the registry
-- invalid deployments fail fast
+- required Schema Registry subjects **exist**
+- compatibility rules are **enforced** (`BACKWARD`, `FORWARD`, `FULL`)
+- schemas are **compatible** with the registry
+- invalid deployments **fail fast**
 
-If anything is wrong → the application does not start.
+👉 **If anything is wrong → the application does not start.**
 
-🚀 Key Features
+---
 
-🚦 Fail-fast startup validation
-🔐 Schema Registry compatibility enforcement
-🔁 Safe schema evolution checks
-⚙️ Spring Boot auto-configuration
-🧩 Vendor-neutral design
-🪶 Zero runtime overhead
-📦 No Kafka abstraction layer
+## 🚀 KEY FEATURES
 
-📌 What This Is (and Isn’t)
-✅ This is:
+- 🚦 **Fail-fast startup validation**
+- 🔐 **Schema Registry compatibility enforcement**
+- 🔁 **Safe schema evolution checks**
+- ⚙️ **Spring Boot auto-configuration**
+- 🧩 **Vendor-neutral design**
+- 🪶 **Zero runtime overhead**
+- 📦 **No Kafka abstraction layer**
 
-- A Kafka governance guardrail
-- A startup safety net
-- A contract enforcement mechanism
+---
 
-❌ This is NOT:
+## 📌 WHAT THIS IS (AND ISN’T)
 
+### ✅ THIS IS:
+- A **Kafka governance guardrail**
+- A **startup safety net**
+- A **schema contract enforcement mechanism**
+
+### ❌ THIS IS NOT:
 - A Kafka client abstraction
 - A Schema Registry replacement
 - A serialization framework
-- A runtime validator
+- A runtime message validator
 
-🛠 Installation
+---
 
+## 🛠 INSTALLATION
+
+```xml
 <dependency>
   <groupId>io.github.mathias82.spring.kafka</groupId>
   <artifactId>spring-kafka-contract-starter</artifactId>
   <version>0.1.0</version>
 </dependency>
+```
+
+📦 Available on Maven Central
+👉 https://repo1.maven.org/maven2/io/github/mathias82/spring/kafka/spring-kafka-contract-starter/0.1.0/
 
 ⚙️ Configuration
 
