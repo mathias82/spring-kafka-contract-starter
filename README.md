@@ -96,6 +96,7 @@ At startup, it validates that:
 
 ⚙️ Configuration
 
+```
 kafka:
   contract:
     enabled: true
@@ -106,6 +107,7 @@ kafka:
     subjects:
       - name: order-events-value
         schema-file: classpath:schemas/order-event.avsc
+```
 
 🔍 What Happens at Startup
 
