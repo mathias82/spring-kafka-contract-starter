@@ -14,9 +14,32 @@
 
     <name>Spring Kafka Contract Starter</name>
     <description>
-        Fail-fast Kafka schema contract enforcement for Spring Boot applications
+        Fail-fast Kafka schema contract enforcement for Spring Boot applications. Enforces Schema Registry compatibility, validates Kafka Avro/JSON schemas at startup, and prevents breaking event-driven data contracts before production.
     </description>
+
     <url>https://github.com/mathias82/spring-kafka-contract-starter</url>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
+        </license>
+    </licenses>
+
+    <scm>
+        <url>https://github.com/mathias82/spring-kafka-contract-starter</url>
+        <connection>scm:git:https://github.com/mathias82/spring-kafka-contract-starter.git</connection>
+        <developerConnection>scm:git:https://github.com/mathias82/spring-kafka-contract-starter.git</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
+
+    <developers>
+        <developer>
+            <id>mathias82</id>
+            <name>Matthaios Stavrou</name>
+            <url>https://github.com/mathias82</url>
+        </developer>
+    </developers>
 
     <properties>
         <java.version>21</java.version>
