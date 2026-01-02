@@ -6,7 +6,7 @@ public interface SchemaRegistryClient {
 
     boolean subjectExists(String subject);
 
-    CompatibilityMode getCompatibility(String subject);
+    CompatibilityMode getCompatibility(String subject, CompatibilityMode defaultMode);
 
     boolean isCompatible(String subject, String schema);
 }

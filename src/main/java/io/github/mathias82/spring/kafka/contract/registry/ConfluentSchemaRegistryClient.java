@@ -1,6 +1,7 @@
 package io.github.mathias82.spring.kafka.contract.registry;
 
 import io.github.mathias82.spring.kafka.contract.model.CompatibilityMode;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
@@ -8,42 +9,88 @@ import java.util.Map;
 
 public class ConfluentSchemaRegistryClient implements SchemaRegistryClient {
 
-    private final String baseUrl;
-    private final RestTemplate rest;
+    private final String registryUrl;
+    private final RestTemplate restTemplate;
 
-    public ConfluentSchemaRegistryClient(String baseUrl, RestTemplate rest) {
-        this.baseUrl = baseUrl;
-        this.rest = rest;
+    public ConfluentSchemaRegistryClient(String registryUrl,
+            RestTemplate restTemplate) {
+        this.registryUrl = registryUrl;
+        this.restTemplate = restTemplate;
     }
 
     @Override
     public boolean subjectExists(String subject) {
-        List<?> subjects = rest.getForObject(
-                baseUrl + "/subjects",
+        List<?> subjects = restTemplate.getForObject(
+                registryUrl + "/subjects",
                 List.class
         );
         return subjects != null && subjects.contains(subject);
     }
 
+    /**
+     * Resolve compatibility mode for a subject.
+     * Priority:
+     * 1. Subject-level config
+     * 2. Global registry config
+     * 3. Fallback (application.yml)
+     */
     @Override
-    public CompatibilityMode getCompatibility(String subject) {
-        Map<?, ?> response = rest.getForObject(
-                baseUrl + "/config/" + subject,
-                Map.class
-        );
-        return CompatibilityMode.valueOf(
-                response.get("compatibilityLevel").toString()
-        );
+    public CompatibilityMode getCompatibility(String subject, CompatibilityMode fallback) {
+
+        CompatibilityMode subjectMode =
+                fetchCompatibility(registryUrl + "/config/" + subject);
+
+        if (subjectMode != null) {
+            return subjectMode;
+        }
+
+        CompatibilityMode globalMode =
+                fetchCompatibility(registryUrl + "/config");
+
+        if (globalMode != null) {
+            return globalMode;
+        }
+
+        return fallback;
+    }
+
+    private CompatibilityMode fetchCompatibility(String url) {
+        try {
+            CompatibilityResponse response =
+                    restTemplate.getForObject(url, CompatibilityResponse.class);
+
+            return response != null ? response.asModeOrNull() : null;
+
+        } catch (HttpClientErrorException.NotFound ignored) {
+            // compatibility not configured
+            return null;
+        }
     }
 
     @Override
     public boolean isCompatible(String subject, String schema) {
         Map<String, Object> request = Map.of("schema", schema);
-        Map<?, ?> response = rest.postForObject(
-                baseUrl + "/compatibility/subjects/" + subject + "/versions/latest",
+
+        Map<?, ?> response = restTemplate.postForObject(
+                registryUrl + "/compatibility/subjects/" + subject + "/versions/latest",
                 request,
                 Map.class
         );
-        return Boolean.TRUE.equals(response.get("is_compatible"));
+
+        return response != null && Boolean.TRUE.equals(response.get("is_compatible"));
+    }
+
+    /**
+     * Confluent Schema Registry response:
+     * { "compatibility": "BACKWARD" }
+     */
+    record CompatibilityResponse(String compatibility) {
+
+        CompatibilityMode asModeOrNull() {
+            if (compatibility == null || compatibility.isBlank()) {
+                return null;
+            }
+            return CompatibilityMode.valueOf(compatibility.toUpperCase());
+        }
     }
 }
