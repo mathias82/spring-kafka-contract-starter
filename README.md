@@ -15,6 +15,13 @@ Enforce Kafka data contracts **at application startup** by validating Schema Reg
 
 ---
 
+📖 **Background & Design Rationale**
+
+This project is explained in detail in the following article, including the motivation, real production issues, and a full working demo:
+
+👉 [How to Fail Fast on Kafka Schema Registry in Spring Boot (Avoid Production Breaks)](https://medium.com/@mstauroy/fail-fast-kafka-schema-contracts-in-spring-boot-before-production-breaks-1b080204b49e)
+
+
 ## ❌ THE PROBLEM
 
 Kafka **does not enforce data contracts**.
