@@ -11,7 +11,7 @@
 
 **Fail-fast Kafka schema contract enforcement for Spring Boot applications.**
 
-Enforce Kafka data contracts **at application startup** by validating Schema Registry subjects, compatibility rules, and schema evolution — **before broken events reach production**.
+Enforce Kafka data contracts **at application startup** by validating Schema Registry subjects, compatibility rules, and schema evolution **before broken events reach production**.
 
 ---
 
