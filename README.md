@@ -9,9 +9,28 @@
 ![Kafka](https://img.shields.io/badge/Apache%20Kafka-3.x-black)
 ![Status](https://img.shields.io/badge/status-stable-brightgreen)
 
-**Fail-fast Kafka schema contract enforcement for Spring Boot applications.**
+**Fail‑fast Kafka schema contract enforcement for Spring Boot applications.**
 
-Enforce Kafka data contracts **at application startup** by validating Schema Registry subjects, compatibility rules, and schema evolution **before broken events reach production**.
+Spring Kafka Contract Starter validates **Kafka Schema Registry contracts at application startup**.  
+It prevents broken schemas, incompatible changes, and missing subjects **before your service goes live**.
+
+> If the contract is broken → **the application does not start.**
+
+---
+
+## ✨ Overview
+
+**Spring Kafka Contract Starter** is a lightweight Spring Boot starter that enforces **Kafka data contracts** using Schema Registry.
+
+It validates:
+- Schema Registry **subjects existence**
+- **Compatibility rules** (BACKWARD / FORWARD / FULL)
+- **Schema evolution safety**
+- Local Avro schemas against the registry
+
+All checks happen **at startup**, not at runtime.
+
+This makes it ideal for **event‑driven microservices**, **SaaS platforms**, and **multi‑team Kafka environments**.
 
 ---
 
