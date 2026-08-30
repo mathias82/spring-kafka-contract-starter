@@ -10,6 +10,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.http.client.support.BasicAuthenticationInterceptor;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
 @AutoConfiguration
@@ -23,7 +25,16 @@ public class KafkaContractAutoConfiguration {
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(properties.getRegistry().getConnectTimeoutMs());
         requestFactory.setReadTimeout(properties.getRegistry().getReadTimeoutMs());
-        return new RestTemplate(requestFactory);
+
+        RestTemplate restTemplate = new RestTemplate(requestFactory);
+        String username = properties.getRegistry().getUsername();
+        if (StringUtils.hasText(username)) {
+            restTemplate.getInterceptors().add(new BasicAuthenticationInterceptor(
+                    username,
+                    properties.getRegistry().getPassword() == null ? "" : properties.getRegistry().getPassword()
+            ));
+        }
+        return restTemplate;
     }
 
     @Bean
@@ -31,17 +42,9 @@ public class KafkaContractAutoConfiguration {
     SchemaRegistryClient schemaRegistryClient(
             KafkaContractProperties properties,
             @Qualifier("kafkaContractRestTemplate") RestTemplate restTemplate) {
-
-        if (properties.getRegistry().getType()
-                == KafkaContractProperties.RegistryType.CONFLUENT) {
-            return new ConfluentSchemaRegistryClient(
-                    properties.getRegistry().getUrl(),
-                    restTemplate
-            );
-        }
-
-        throw new IllegalStateException(
-                "Unsupported Schema Registry type: " + properties.getRegistry().getType()
+        return new ConfluentSchemaRegistryClient(
+                properties.getRegistry().getUrl(),
+                restTemplate
         );
     }
 
