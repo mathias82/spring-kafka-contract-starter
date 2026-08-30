@@ -3,26 +3,34 @@ package io.github.mathias82.spring.kafka.contract.autoconfigure;
 import io.github.mathias82.spring.kafka.contract.registry.ConfluentSchemaRegistryClient;
 import io.github.mathias82.spring.kafka.contract.registry.SchemaRegistryClient;
 import io.github.mathias82.spring.kafka.contract.validation.StartupSchemaValidator;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
-@Configuration
+@AutoConfiguration
 @EnableConfigurationProperties(KafkaContractProperties.class)
 @ConditionalOnProperty(prefix = "kafka.contract", name = "enabled", havingValue = "true")
 public class KafkaContractAutoConfiguration {
 
-    @Bean
-    public RestTemplate restTemplate() {
-        return new RestTemplate();
+    @Bean(name = "kafkaContractRestTemplate")
+    @ConditionalOnMissingBean(name = "kafkaContractRestTemplate")
+    RestTemplate kafkaContractRestTemplate(KafkaContractProperties properties) {
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(properties.getRegistry().getConnectTimeoutMs());
+        requestFactory.setReadTimeout(properties.getRegistry().getReadTimeoutMs());
+        return new RestTemplate(requestFactory);
     }
 
     @Bean
-    public SchemaRegistryClient schemaRegistryClient(
+    @ConditionalOnMissingBean(SchemaRegistryClient.class)
+    SchemaRegistryClient schemaRegistryClient(
             KafkaContractProperties properties,
-            RestTemplate restTemplate) {
+            @Qualifier("kafkaContractRestTemplate") RestTemplate restTemplate) {
 
         if (properties.getRegistry().getType()
                 == KafkaContractProperties.RegistryType.CONFLUENT) {
@@ -32,11 +40,14 @@ public class KafkaContractAutoConfiguration {
             );
         }
 
-        throw new IllegalStateException("Unsupported registry type");
+        throw new IllegalStateException(
+                "Unsupported Schema Registry type: " + properties.getRegistry().getType()
+        );
     }
 
     @Bean
-    public StartupSchemaValidator startupSchemaValidator(
+    @ConditionalOnMissingBean(StartupSchemaValidator.class)
+    StartupSchemaValidator startupSchemaValidator(
             KafkaContractProperties properties,
             SchemaRegistryClient client) {
         return new StartupSchemaValidator(properties, client);

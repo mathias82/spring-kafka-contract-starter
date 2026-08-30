@@ -48,8 +48,10 @@ public class KafkaContractProperties {
     }
 
     public static class Registry {
-        private RegistryType type;
+        private RegistryType type = RegistryType.CONFLUENT;
         private String url;
+        private int connectTimeoutMs = 2_000;
+        private int readTimeoutMs = 5_000;
 
         public RegistryType getType() {
             return type;
@@ -65,6 +67,22 @@ public class KafkaContractProperties {
 
         public void setUrl(String url) {
             this.url = url;
+        }
+
+        public int getConnectTimeoutMs() {
+            return connectTimeoutMs;
+        }
+
+        public void setConnectTimeoutMs(int connectTimeoutMs) {
+            this.connectTimeoutMs = connectTimeoutMs;
+        }
+
+        public int getReadTimeoutMs() {
+            return readTimeoutMs;
+        }
+
+        public void setReadTimeoutMs(int readTimeoutMs) {
+            this.readTimeoutMs = readTimeoutMs;
         }
     }
 

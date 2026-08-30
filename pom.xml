@@ -14,7 +14,7 @@
 
     <name>Spring Kafka Contract Starter</name>
     <description>
-        Fail-fast Kafka schema contract enforcement for Spring Boot applications. Enforces Schema Registry compatibility, validates Kafka Avro/JSON schemas at startup, and prevents breaking event-driven data contracts before production.
+        Fail-fast Kafka schema contract enforcement for Spring Boot applications. Enforces Schema Registry compatibility and validates configured Avro, JSON Schema, or Protobuf contracts at startup.
     </description>
 
     <url>https://github.com/mathias82/spring-kafka-contract-starter</url>
@@ -44,9 +44,7 @@
     <properties>
         <java.version>21</java.version>
         <spring.boot.version>3.3.0</spring.boot.version>
-        <spring.kafka.version>3.1.0</spring.kafka.version>
     </properties>
-
 
     <dependencyManagement>
         <dependencies>
@@ -60,9 +58,7 @@
         </dependencies>
     </dependencyManagement>
 
-
     <dependencies>
-
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-autoconfigure</artifactId>
@@ -77,7 +73,6 @@
         <dependency>
             <groupId>org.springframework.kafka</groupId>
             <artifactId>spring-kafka</artifactId>
-            <version>${spring.kafka.version}</version>
             <scope>provided</scope>
         </dependency>
 
@@ -91,7 +86,6 @@
             <artifactId>slf4j-api</artifactId>
         </dependency>
 
-        <!-- Test dependencies     -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -109,10 +103,8 @@
             <artifactId>kafka</artifactId>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
 
-    <!-- Build configuration   -->
     <build>
         <plugins>
             <plugin>
@@ -122,6 +114,12 @@
                 <configuration>
                     <release>21</release>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
             </plugin>
 
             <plugin>
@@ -167,13 +165,11 @@
             <id>release</id>
             <build>
                 <plugins>
-
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
                         <version>3.1.0</version>
                         <configuration>
-                            <executable>C:\Program Files\Git\usr\bin\gpg.exe</executable>
                             <keyname>32FD74C82E76DD0E</keyname>
                             <gpgArguments>
                                 <arg>--batch</arg>
@@ -190,7 +186,6 @@
                             </execution>
                         </executions>
                     </plugin>
-
                 </plugins>
             </build>
         </profile>

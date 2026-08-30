@@ -1,10 +1,11 @@
 package io.github.mathias82.spring.kafka.contract.registry;
 
 import io.github.mathias82.spring.kafka.contract.model.CompatibilityMode;
+import io.github.mathias82.spring.kafka.contract.model.SchemaType;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 
 public class ConfluentSchemaRegistryClient implements SchemaRegistryClient {
@@ -20,11 +21,15 @@ public class ConfluentSchemaRegistryClient implements SchemaRegistryClient {
 
     @Override
     public boolean subjectExists(String subject) {
-        List<?> subjects = restTemplate.getForObject(
-                registryUrl + "/subjects",
-                List.class
-        );
-        return subjects != null && subjects.contains(subject);
+        try {
+            restTemplate.getForObject(
+                    registryUrl + "/subjects/" + subject + "/versions/latest",
+                    Map.class
+            );
+            return true;
+        } catch (HttpClientErrorException.NotFound ignored) {
+            return false;
+        }
     }
 
     /**
@@ -62,14 +67,15 @@ public class ConfluentSchemaRegistryClient implements SchemaRegistryClient {
             return response != null ? response.asModeOrNull() : null;
 
         } catch (HttpClientErrorException.NotFound ignored) {
-            // compatibility not configured
             return null;
         }
     }
 
     @Override
-    public boolean isCompatible(String subject, String schema) {
-        Map<String, Object> request = Map.of("schema", schema);
+    public boolean isCompatible(String subject, String schema, SchemaType schemaType) {
+        Map<String, Object> request = new HashMap<>();
+        request.put("schema", schema);
+        request.put("schemaType", schemaType.name());
 
         Map<?, ?> response = restTemplate.postForObject(
                 registryUrl + "/compatibility/subjects/" + subject + "/versions/latest",
@@ -80,10 +86,6 @@ public class ConfluentSchemaRegistryClient implements SchemaRegistryClient {
         return response != null && Boolean.TRUE.equals(response.get("is_compatible"));
     }
 
-    /**
-     * Confluent Schema Registry response:
-     * { "compatibility": "BACKWARD" }
-     */
     record CompatibilityResponse(String compatibility) {
 
         CompatibilityMode asModeOrNull() {

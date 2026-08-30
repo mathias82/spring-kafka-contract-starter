@@ -1,113 +1,26 @@
-# 🚦 SPRING KAFKA CONTRACT STARTER
+# 🚦 Spring Kafka Contract Starter
 
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.mathias82.spring.kafka/spring-kafka-contract-starter.svg)](https://repo1.maven.org/maven2/io/github/mathias82/spring/kafka/spring-kafka-contract-starter/0.1.0/)
 [![Website](https://img.shields.io/badge/Website-GitHub%20Pages-black)](https://mathias82.github.io/spring-kafka-contract-demo/)
 [![Build](https://github.com/mathias82/spring-kafka-contract-starter/actions/workflows/build.yml/badge.svg)](https://github.com/mathias82/spring-kafka-contract-starter/actions)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-![Java](https://img.shields.io/badge/Java-17%2B-blue)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-brightgreen)
-![Kafka](https://img.shields.io/badge/Apache%20Kafka-3.x-black)
-![Status](https://img.shields.io/badge/status-stable-brightgreen)
+![Java](https://img.shields.io/badge/Java-21-blue)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3-brightgreen)
 
-**Fail‑fast Kafka schema contract enforcement for Spring Boot applications.**
+**Fail-fast Kafka Schema Registry contract enforcement for Spring Boot applications.**
 
-Spring Kafka Contract Starter validates **Kafka Schema Registry contracts at application startup**.  
-It prevents broken schemas, incompatible changes, and missing subjects **before your service goes live**.
+The starter validates configured Kafka schema contracts during application startup. If a required subject is missing, the effective compatibility mode is different from the expected mode, or the local schema is incompatible with the latest registered version, startup fails.
 
-> If the contract is broken → **the application does not start.**
+## What it validates
 
----
+- required Schema Registry subjects exist
+- subject-level or global compatibility matches the configured expectation
+- local schemas are compatible with the latest registered schema
+- schema type is sent explicitly to Confluent Schema Registry (`AVRO`, `JSON`, or `PROTOBUF`)
 
-## ✨ Overview
+Validation happens at startup, so there is no per-message runtime validation overhead.
 
-**Spring Kafka Contract Starter** is a lightweight Spring Boot starter that enforces **Kafka data contracts** using Schema Registry.
-
-It validates:
-- Schema Registry **subjects existence**
-- **Compatibility rules** (BACKWARD / FORWARD / FULL)
-- **Schema evolution safety**
-- Local Avro schemas against the registry
-
-All checks happen **at startup**, not at runtime.
-
-This makes it ideal for **event‑driven microservices**, **SaaS platforms**, and **multi‑team Kafka environments**.
-
----
-
-📖 **Background & Design Rationale**
-
-This project is explained in detail in the following article, including the motivation, real production issues, and a full working demo:
-
-👉 [How to Fail Fast on Kafka Schema Registry in Spring Boot (Avoid Production Breaks)](https://medium.com/@mstauroy/fail-fast-kafka-schema-contracts-in-spring-boot-before-production-breaks-1b080204b49e)
-
-
-## ❌ THE PROBLEM
-
-Kafka **does not enforce data contracts**.
-
-Even when using Schema Registry, applications can still:
-
-- start with **missing schema subjects**
-- ignore **compatibility rules**
-- deploy **breaking schema changes**
-- silently break **downstream consumers**
-
-In **multi-team, event-driven architectures**, this leads to:
-
-- late failures
-- production incidents
-- broken pipelines
-- loss of trust in Kafka events
-
-Schema Registry **stores schemas**, but it **does not protect you at application startup**.
-
----
-
-## ✅ THE SOLUTION
-
-**Spring Kafka Contract Starter** enforces Kafka schema contracts **before your application starts**.
-
-It acts as a **governance guardrail**, not another Kafka abstraction.
-
-At startup, it validates that:
-
-- required Schema Registry subjects **exist**
-- compatibility rules are **enforced** (`BACKWARD`, `FORWARD`, `FULL`)
-- schemas are **compatible** with the registry
-- invalid deployments **fail fast**
-
-👉 **If anything is wrong → the application does not start.**
-
----
-
-## 🚀 KEY FEATURES
-
-- 🚦 **Fail-fast startup validation**
-- 🔐 **Schema Registry compatibility enforcement**
-- 🔁 **Safe schema evolution checks**
-- ⚙️ **Spring Boot auto-configuration**
-- 🧩 **Vendor-neutral design**
-- 🪶 **Zero runtime overhead**
-- 📦 **No Kafka abstraction layer**
-
----
-
-## 📌 WHAT THIS IS (AND ISN’T)
-
-### ✅ THIS IS:
-- A **Kafka governance guardrail**
-- A **startup safety net**
-- A **schema contract enforcement mechanism**
-
-### ❌ THIS IS NOT:
-- A Kafka client abstraction
-- A Schema Registry replacement
-- A serialization framework
-- A runtime message validator
-
----
-
-## 🛠 INSTALLATION
+## Installation
 
 ```xml
 <dependency>
@@ -117,12 +30,11 @@ At startup, it validates that:
 </dependency>
 ```
 
-📦 Available on Maven Central
-👉 https://repo1.maven.org/maven2/io/github/mathias82/spring/kafka/spring-kafka-contract-starter/0.1.0/
+The artifact is available from Maven Central.
 
-⚙️ Configuration
+## Configuration
 
-```
+```yaml
 kafka:
   contract:
     enabled: true
@@ -130,82 +42,66 @@ kafka:
     registry:
       type: confluent
       url: http://localhost:8081
+      connect-timeout-ms: 2000
+      read-timeout-ms: 5000
     subjects:
       - name: order-events-value
         schema-file: classpath:schemas/order-event.avsc
+        schema-type: AVRO
 ```
 
-🔍 What Happens at Startup
+`schema-type` defaults to `AVRO` when omitted.
 
-For each configured subject:
-✔️ Check if the subject exists in Schema Registry
-✔️ Resolve subject-level or global compatibility
-✔️ Validate the local schema against registry rules
-❌ Fail startup if anything is invalid
+Supported schema type values:
 
-MissingSchemaException
-IncompatibleSchemaException
+- `AVRO`
+- `JSON`
+- `PROTOBUF`
 
-No more silent contract violations.
+## Startup flow
 
-🔁 Schema Evolution Safety
+For every configured subject the starter:
 
-Supports safe evolution strategies:
+1. checks that the subject has a latest registered version
+2. resolves compatibility using subject config, then global config, then the configured fallback
+3. compares the effective mode with `kafka.contract.compatibility`
+4. submits the local schema to the Schema Registry compatibility endpoint
+5. throws a startup exception when the contract is missing or incompatible
 
-- BACKWARD
-- FORWARD
-- FULL
+Typical failures are surfaced as `MissingSchemaException` or `IncompatibleSchemaException`.
 
-Prevents:
-- removing required fields
-- changing field types
-- incompatible schema change
+## Spring Boot integration
 
+The project is a Spring Boot 3 auto-configuration and is registered through:
 
-🧪 Demo Project
+```text
+META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports
+```
 
-A complete working demo is available:
+Consumers do not need to place their application under the `io.github.mathias82` package or manually import the configuration.
 
-👉 Spring Kafka Contract Demo
+## Customization
+
+The starter creates an internal `kafkaContractRestTemplate` with configurable connect/read timeouts. Applications can override the `SchemaRegistryClient` bean to provide a custom registry integration.
+
+## Demo
+
+A runnable companion project is available at:
+
 https://github.com/mathias82/spring-kafka-contract-demo
 
-Includes:
+It includes Kafka, Confluent Schema Registry, schema initialization, compatible/incompatible evolution examples, producer/consumer endpoints, Postman examples, and a GitHub Pages walkthrough.
 
-- Docker Compose (Kafka + Schema Registry)
-- Producer & Consumer REST APIs
-- Schema evolution examples (v1 / v2 / v3)
-- Postman collections
-- Live walkthrough steps
+## Background
 
-🎯 Why This Matters
+Design rationale and production motivation:
 
-In real Kafka systems:
+https://medium.com/@mstauroy/fail-fast-kafka-schema-contracts-in-spring-boot-before-production-breaks-1b080204b49e
 
-- contracts are architecture
-- breaking events are production outages
-- validation must be automatic, not tribal knowledge
+## Scope
 
-This starter ensures:
-- If the contract is broken, the app does not start.
+This project is a startup governance guardrail. It is not a Kafka client abstraction, Schema Registry replacement, serialization framework, or runtime message validator.
 
-🧠 Inspired By
+## Contributing
 
-1. Contract-first APIs
-2. Database migration validation
-3. Fail-fast system design
-4. Real production Kafka failures
-
-⭐ When Should You Use This?
-
-Use it if:
-
-- you run Kafka in production
-- multiple teams publish events
-- you care about schema evolution
-- you want confidence in deployments
-
-🙌 Contributing
-
-Contributions, ideas, and discussions are welcome.
-If this project saves you from a production incident, leave a ⭐.
-
+Contributions, issues, and discussions are welcome.
