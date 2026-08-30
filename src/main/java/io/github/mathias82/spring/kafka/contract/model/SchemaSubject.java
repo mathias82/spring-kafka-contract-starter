@@ -6,6 +6,7 @@ public class SchemaSubject {
 
     private String name;
     private Resource schemaFile;
+    private SchemaType schemaType = SchemaType.AVRO;
 
     public String getName() {
         return name;
@@ -21,5 +22,13 @@ public class SchemaSubject {
 
     public void setSchemaFile(Resource schemaFile) {
         this.schemaFile = schemaFile;
+    }
+
+    public SchemaType getSchemaType() {
+        return schemaType;
+    }
+
+    public void setSchemaType(SchemaType schemaType) {
+        this.schemaType = schemaType;
     }
 }
