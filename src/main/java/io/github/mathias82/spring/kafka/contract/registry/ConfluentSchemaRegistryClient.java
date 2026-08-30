@@ -50,8 +50,19 @@ public class ConfluentSchemaRegistryClient implements SchemaRegistryClient {
 
     private CompatibilityMode fetchCompatibility(URI uri) {
         try {
-            CompatibilityResponse response = restTemplate.getForObject(uri, CompatibilityResponse.class);
-            return response != null ? response.asModeOrNull() : null;
+            Map<?, ?> response = restTemplate.getForObject(uri, Map.class);
+            if (response == null) {
+                return null;
+            }
+
+            Object value = response.get("compatibilityLevel");
+            if (value == null) {
+                value = response.get("compatibility");
+            }
+            if (value == null || value.toString().isBlank()) {
+                return null;
+            }
+            return CompatibilityMode.valueOf(value.toString().toUpperCase());
         } catch (HttpClientErrorException.NotFound ignored) {
             return null;
         } catch (RestClientException ex) {
@@ -98,14 +109,5 @@ public class ConfluentSchemaRegistryClient implements SchemaRegistryClient {
                 "Failed to %s against Schema Registry at %s%s".formatted(operation, registryUrl, detail),
                 ex
         );
-    }
-
-    record CompatibilityResponse(String compatibility) {
-        CompatibilityMode asModeOrNull() {
-            if (compatibility == null || compatibility.isBlank()) {
-                return null;
-            }
-            return CompatibilityMode.valueOf(compatibility.toUpperCase());
-        }
     }
 }
