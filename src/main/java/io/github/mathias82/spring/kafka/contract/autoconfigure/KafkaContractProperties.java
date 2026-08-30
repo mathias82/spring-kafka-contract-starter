@@ -13,6 +13,7 @@ public class KafkaContractProperties {
     private boolean enabled = false;
     private CompatibilityMode compatibility = CompatibilityMode.BACKWARD;
     private Registry registry = new Registry();
+    private Retry retry = new Retry();
     private List<SchemaSubject> subjects = new ArrayList<>();
 
     public boolean isEnabled() {
@@ -37,6 +38,14 @@ public class KafkaContractProperties {
 
     public void setRegistry(Registry registry) {
         this.registry = registry;
+    }
+
+    public Retry getRetry() {
+        return retry;
+    }
+
+    public void setRetry(Retry retry) {
+        this.retry = retry;
     }
 
     public List<SchemaSubject> getSubjects() {
@@ -92,6 +101,45 @@ public class KafkaContractProperties {
 
         public void setPassword(String password) {
             this.password = password;
+        }
+    }
+
+    public static class Retry {
+        private int maxAttempts = 3;
+        private long initialBackoffMs = 500;
+        private double multiplier = 2.0;
+        private long maxBackoffMs = 5_000;
+
+        public int getMaxAttempts() {
+            return maxAttempts;
+        }
+
+        public void setMaxAttempts(int maxAttempts) {
+            this.maxAttempts = Math.max(1, maxAttempts);
+        }
+
+        public long getInitialBackoffMs() {
+            return initialBackoffMs;
+        }
+
+        public void setInitialBackoffMs(long initialBackoffMs) {
+            this.initialBackoffMs = Math.max(0, initialBackoffMs);
+        }
+
+        public double getMultiplier() {
+            return multiplier;
+        }
+
+        public void setMultiplier(double multiplier) {
+            this.multiplier = multiplier < 1.0 ? 1.0 : multiplier;
+        }
+
+        public long getMaxBackoffMs() {
+            return maxBackoffMs;
+        }
+
+        public void setMaxBackoffMs(long maxBackoffMs) {
+            this.maxBackoffMs = Math.max(0, maxBackoffMs);
         }
     }
 }
