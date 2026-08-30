@@ -18,6 +18,7 @@ The starter validates configured Kafka schema contracts during application start
 - local schemas are compatible with the latest registered schema
 - schema type is sent explicitly (`AVRO`, `JSON`, or `PROTOBUF`)
 - registry communication failures are surfaced with a dedicated contract exception
+- transient registry communication failures can be retried with bounded exponential backoff
 
 Validation happens at startup, so there is no per-message runtime validation overhead.
 
@@ -27,7 +28,7 @@ Validation happens at startup, so there is no per-message runtime validation ove
 <dependency>
   <groupId>io.github.mathias82.spring.kafka</groupId>
   <artifactId>spring-kafka-contract-starter</artifactId>
-  <version>0.2.0</version>
+  <version>0.2.1</version>
 </dependency>
 ```
 
@@ -45,6 +46,11 @@ kafka:
       # Optional for Confluent Cloud / secured registries
       username: ${SCHEMA_REGISTRY_API_KEY:}
       password: ${SCHEMA_REGISTRY_API_SECRET:}
+    retry:
+      max-attempts: 3
+      initial-backoff-ms: 500
+      multiplier: 2.0
+      max-backoff-ms: 5000
     subjects:
       - name: order-events-value
         schema-file: classpath:schemas/order-event.avsc
@@ -55,6 +61,8 @@ kafka:
 
 Supported compatibility modes are `NONE`, `BACKWARD`, `BACKWARD_TRANSITIVE`, `FORWARD`, `FORWARD_TRANSITIVE`, `FULL`, and `FULL_TRANSITIVE`.
 
+Retry is applied only to `SchemaRegistryCommunicationException`. Missing subjects and incompatible contracts still fail immediately. Set `max-attempts: 1` to disable retries.
+
 ## Startup flow
 
 For every configured subject the starter:
@@ -63,7 +71,8 @@ For every configured subject the starter:
 2. resolves compatibility using subject config, then global config, then the configured fallback
 3. compares the effective mode with `kafka.contract.compatibility`
 4. submits the local schema to the compatibility endpoint
-5. fails startup when the contract is missing, incompatible, or the registry cannot be reached
+5. retries transient registry communication failures according to the configured policy
+6. fails startup when the contract is missing, incompatible, or the registry remains unavailable
 
 Typical failures are surfaced as `MissingSchemaException`, `IncompatibleSchemaException`, or `SchemaRegistryCommunicationException`.
 
