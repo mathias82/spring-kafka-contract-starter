@@ -1,10 +1,16 @@
 package io.github.mathias82.spring.kafka.contract.registry;
 
+import io.github.mathias82.spring.kafka.contract.exception.SchemaRegistryCommunicationException;
 import io.github.mathias82.spring.kafka.contract.model.CompatibilityMode;
 import io.github.mathias82.spring.kafka.contract.model.SchemaType;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,61 +19,54 @@ public class ConfluentSchemaRegistryClient implements SchemaRegistryClient {
     private final String registryUrl;
     private final RestTemplate restTemplate;
 
-    public ConfluentSchemaRegistryClient(String registryUrl,
-            RestTemplate restTemplate) {
+    public ConfluentSchemaRegistryClient(String registryUrl, RestTemplate restTemplate) {
         this.registryUrl = registryUrl;
         this.restTemplate = restTemplate;
     }
 
     @Override
     public boolean subjectExists(String subject) {
+        URI uri = uri("subjects", subject, "versions", "latest");
         try {
-            restTemplate.getForObject(
-                    registryUrl + "/subjects/" + subject + "/versions/latest",
-                    Map.class
-            );
+            restTemplate.getForObject(uri, Map.class);
             return true;
         } catch (HttpClientErrorException.NotFound ignored) {
             return false;
+        } catch (RestClientException ex) {
+            throw communicationFailure("check subject '%s'".formatted(subject), ex);
         }
     }
 
-    /**
-     * Resolve compatibility mode for a subject.
-     * Priority:
-     * 1. Subject-level config
-     * 2. Global registry config
-     * 3. Fallback (application.yml)
-     */
     @Override
     public CompatibilityMode getCompatibility(String subject, CompatibilityMode fallback) {
-
-        CompatibilityMode subjectMode =
-                fetchCompatibility(registryUrl + "/config/" + subject);
-
+        CompatibilityMode subjectMode = fetchCompatibility(uri("config", subject));
         if (subjectMode != null) {
             return subjectMode;
         }
 
-        CompatibilityMode globalMode =
-                fetchCompatibility(registryUrl + "/config");
-
-        if (globalMode != null) {
-            return globalMode;
-        }
-
-        return fallback;
+        CompatibilityMode globalMode = fetchCompatibility(uri("config"));
+        return globalMode != null ? globalMode : fallback;
     }
 
-    private CompatibilityMode fetchCompatibility(String url) {
+    private CompatibilityMode fetchCompatibility(URI uri) {
         try {
-            CompatibilityResponse response =
-                    restTemplate.getForObject(url, CompatibilityResponse.class);
+            Map<?, ?> response = restTemplate.getForObject(uri, Map.class);
+            if (response == null) {
+                return null;
+            }
 
-            return response != null ? response.asModeOrNull() : null;
-
+            Object value = response.get("compatibilityLevel");
+            if (value == null) {
+                value = response.get("compatibility");
+            }
+            if (value == null || value.toString().isBlank()) {
+                return null;
+            }
+            return CompatibilityMode.valueOf(value.toString().toUpperCase());
         } catch (HttpClientErrorException.NotFound ignored) {
             return null;
+        } catch (RestClientException ex) {
+            throw communicationFailure("read compatibility configuration", ex);
         }
     }
 
@@ -77,22 +76,38 @@ public class ConfluentSchemaRegistryClient implements SchemaRegistryClient {
         request.put("schema", schema);
         request.put("schemaType", schemaType.name());
 
-        Map<?, ?> response = restTemplate.postForObject(
-                registryUrl + "/compatibility/subjects/" + subject + "/versions/latest",
-                request,
-                Map.class
-        );
-
-        return response != null && Boolean.TRUE.equals(response.get("is_compatible"));
+        try {
+            Map<?, ?> response = restTemplate.postForObject(
+                    uri("compatibility", "subjects", subject, "versions", "latest"),
+                    request,
+                    Map.class
+            );
+            return response != null && Boolean.TRUE.equals(response.get("is_compatible"));
+        } catch (RestClientException ex) {
+            throw communicationFailure("validate compatibility for subject '%s'".formatted(subject), ex);
+        }
     }
 
-    record CompatibilityResponse(String compatibility) {
-
-        CompatibilityMode asModeOrNull() {
-            if (compatibility == null || compatibility.isBlank()) {
-                return null;
-            }
-            return CompatibilityMode.valueOf(compatibility.toUpperCase());
+    private URI uri(String... segments) {
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(registryUrl);
+        for (String segment : segments) {
+            builder.pathSegment(segment);
         }
+        return builder.build().encode().toUri();
+    }
+
+    private SchemaRegistryCommunicationException communicationFailure(String operation, RestClientException ex) {
+        String detail = "";
+        if (ex instanceof RestClientResponseException responseException) {
+            HttpStatus status = HttpStatus.resolve(responseException.getStatusCode().value());
+            detail = " (HTTP %d%s)".formatted(
+                    responseException.getStatusCode().value(),
+                    status == null ? "" : " " + status.getReasonPhrase()
+            );
+        }
+        return new SchemaRegistryCommunicationException(
+                "Failed to %s against Schema Registry at %s%s".formatted(operation, registryUrl, detail),
+                ex
+        );
     }
 }
