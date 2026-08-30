@@ -64,13 +64,6 @@ public class StartupSchemaValidator implements ApplicationRunner {
                 sleep(backoffMs);
                 backoffMs = nextBackoff(backoffMs, retry);
             }
-
-            report.recordValid(
-                    subjectName,
-                    expectedCompatibility,
-                    actualCompatibility,
-                    subject.getSchemaType()
-            );
         }
     }
 
@@ -95,6 +88,13 @@ public class StartupSchemaValidator implements ApplicationRunner {
         if (!client.isCompatible(subjectName, schema, subject.getSchemaType())) {
             throw new IncompatibleSchemaException("Schema is NOT compatible for subject: " + subjectName);
         }
+
+        report.recordValid(
+                subjectName,
+                expectedCompatibility,
+                actualCompatibility,
+                subject.getSchemaType()
+        );
     }
 
     private long nextBackoff(long currentBackoffMs, KafkaContractProperties.Retry retry) {
