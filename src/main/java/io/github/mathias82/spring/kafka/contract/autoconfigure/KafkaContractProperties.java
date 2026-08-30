@@ -48,18 +48,11 @@ public class KafkaContractProperties {
     }
 
     public static class Registry {
-        private RegistryType type = RegistryType.CONFLUENT;
         private String url;
         private int connectTimeoutMs = 2_000;
         private int readTimeoutMs = 5_000;
-
-        public RegistryType getType() {
-            return type;
-        }
-
-        public void setType(RegistryType type) {
-            this.type = type;
-        }
+        private String username;
+        private String password;
 
         public String getUrl() {
             return url;
@@ -84,10 +77,21 @@ public class KafkaContractProperties {
         public void setReadTimeoutMs(int readTimeoutMs) {
             this.readTimeoutMs = readTimeoutMs;
         }
-    }
 
-    public enum RegistryType {
-        CONFLUENT,
-        APICURIO
+        public String getUsername() {
+            return username;
+        }
+
+        public void setUsername(String username) {
+            this.username = username;
+        }
+
+        public String getPassword() {
+            return password;
+        }
+
+        public void setPassword(String password) {
+            this.password = password;
+        }
     }
 }
