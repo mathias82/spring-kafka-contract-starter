@@ -15,7 +15,6 @@ import static org.assertj.core.api.Assertions.assertThat;
         classes = AutoConfigurationIntegrationTest.TestApplication.class,
         properties = {
                 "kafka.contract.enabled=true",
-                "kafka.contract.registry.type=confluent",
                 "kafka.contract.registry.url=http://localhost:8081"
         }
 )
