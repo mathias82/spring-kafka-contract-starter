@@ -2,6 +2,7 @@ package io.github.mathias82.spring.kafka.contract.autoconfigure;
 
 import io.github.mathias82.spring.kafka.contract.registry.ConfluentSchemaRegistryClient;
 import io.github.mathias82.spring.kafka.contract.registry.SchemaRegistryClient;
+import io.github.mathias82.spring.kafka.contract.validation.ContractValidationReport;
 import io.github.mathias82.spring.kafka.contract.validation.StartupSchemaValidator;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -49,10 +50,17 @@ public class KafkaContractAutoConfiguration {
     }
 
     @Bean
+    @ConditionalOnMissingBean(ContractValidationReport.class)
+    ContractValidationReport contractValidationReport() {
+        return new ContractValidationReport();
+    }
+
+    @Bean
     @ConditionalOnMissingBean(StartupSchemaValidator.class)
     StartupSchemaValidator startupSchemaValidator(
             KafkaContractProperties properties,
-            SchemaRegistryClient client) {
-        return new StartupSchemaValidator(properties, client);
+            SchemaRegistryClient client,
+            ContractValidationReport report) {
+        return new StartupSchemaValidator(properties, client, report);
     }
 }

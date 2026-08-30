@@ -26,11 +26,14 @@ public class StartupSchemaValidator implements ApplicationRunner {
 
     private final KafkaContractProperties properties;
     private final SchemaRegistryClient client;
+    private final ContractValidationReport report;
 
     public StartupSchemaValidator(KafkaContractProperties properties,
-            SchemaRegistryClient client) {
+            SchemaRegistryClient client,
+            ContractValidationReport report) {
         this.properties = properties;
         this.client = client;
+        this.report = report;
     }
 
     @Override
@@ -61,6 +64,13 @@ public class StartupSchemaValidator implements ApplicationRunner {
                 sleep(backoffMs);
                 backoffMs = nextBackoff(backoffMs, retry);
             }
+
+            report.recordValid(
+                    subjectName,
+                    expectedCompatibility,
+                    actualCompatibility,
+                    subject.getSchemaType()
+            );
         }
     }
 

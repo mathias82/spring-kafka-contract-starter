@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -26,6 +27,7 @@ class StartupSchemaValidatorTest {
 
     private KafkaContractProperties properties;
     private SchemaRegistryClient client;
+    private ContractValidationReport report;
     private StartupSchemaValidator validator;
     private SchemaSubject subject;
 
@@ -44,7 +46,8 @@ class StartupSchemaValidatorTest {
         properties.setSubjects(List.of(subject));
 
         client = mock(SchemaRegistryClient.class);
-        validator = new StartupSchemaValidator(properties, client);
+        report = new ContractValidationReport();
+        validator = new StartupSchemaValidator(properties, client, report);
     }
 
     @Test
@@ -76,7 +79,7 @@ class StartupSchemaValidatorTest {
     }
 
     @Test
-    void succeedsWhenContractIsValid() {
+    void succeedsWhenContractIsValidAndRecordsStatus() {
         when(client.subjectExists("orders-value")).thenReturn(true);
         when(client.getCompatibility("orders-value", CompatibilityMode.BACKWARD))
                 .thenReturn(CompatibilityMode.BACKWARD);
@@ -85,6 +88,9 @@ class StartupSchemaValidatorTest {
                 org.mockito.ArgumentMatchers.eq(SchemaType.AVRO))).thenReturn(true);
 
         assertDoesNotThrow(() -> validator.run(null));
+        assertEquals(1, report.getSubjects().size());
+        assertEquals("VALID", report.getSubjects().getFirst().status());
+        assertEquals("orders-value", report.getSubjects().getFirst().subject());
     }
 
     @Test
