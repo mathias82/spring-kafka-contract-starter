@@ -7,7 +7,7 @@
 
     <groupId>io.github.mathias82.spring.kafka</groupId>
     <artifactId>spring-kafka-contract-starter</artifactId>
-    <version>0.2.0</version>
+    <version>0.2.2-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>Spring Kafka Contract Starter</name>
