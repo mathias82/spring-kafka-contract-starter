@@ -31,8 +31,7 @@ public class StartupSchemaValidator implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) throws Exception {
 
-        CompatibilityMode expectedCompatibility =
-                properties.getCompatibility();
+        CompatibilityMode expectedCompatibility = properties.getCompatibility();
 
         for (SchemaSubject subject : properties.getSubjects()) {
 
@@ -56,7 +55,7 @@ public class StartupSchemaValidator implements ApplicationRunner {
 
             String schema = loadSchema(subject.getSchemaFile());
 
-            if (!client.isCompatible(subjectName, schema)) {
+            if (!client.isCompatible(subjectName, schema, subject.getSchemaType())) {
                 throw new IncompatibleSchemaException(
                         "Schema is NOT compatible for subject: " + subjectName
                 );
