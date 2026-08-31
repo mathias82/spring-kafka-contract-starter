@@ -7,13 +7,35 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Configuration properties for startup Kafka schema contract validation.
+ */
 @ConfigurationProperties(prefix = "kafka.contract")
 public class KafkaContractProperties {
 
+    /**
+     * Whether startup contract validation is enabled.
+     */
     private boolean enabled = false;
+
+    /**
+     * Compatibility mode the application expects for configured subjects.
+     */
     private CompatibilityMode compatibility = CompatibilityMode.BACKWARD;
+
+    /**
+     * Schema Registry connection settings used for startup validation.
+     */
     private Registry registry = new Registry();
+
+    /**
+     * Retry policy for transient Schema Registry communication failures.
+     */
     private Retry retry = new Retry();
+
+    /**
+     * Schema Registry subjects and local schemas that must be validated at startup.
+     */
     private List<SchemaSubject> subjects = new ArrayList<>();
 
     public boolean isEnabled() {
@@ -57,10 +79,30 @@ public class KafkaContractProperties {
     }
 
     public static class Registry {
+
+        /**
+         * Base URL of the Confluent-compatible Schema Registry.
+         */
         private String url;
+
+        /**
+         * HTTP connection timeout in milliseconds.
+         */
         private int connectTimeoutMs = 2_000;
+
+        /**
+         * HTTP read timeout in milliseconds.
+         */
         private int readTimeoutMs = 5_000;
+
+        /**
+         * Optional HTTP Basic authentication username or Confluent Cloud API key.
+         */
         private String username;
+
+        /**
+         * Optional HTTP Basic authentication password or Confluent Cloud API secret.
+         */
         private String password;
 
         public String getUrl() {
@@ -105,9 +147,26 @@ public class KafkaContractProperties {
     }
 
     public static class Retry {
+
+        /**
+         * Maximum number of attempts for transient Schema Registry communication failures.
+         * A value of 1 disables retries.
+         */
         private int maxAttempts = 3;
+
+        /**
+         * Initial delay in milliseconds before the first retry.
+         */
         private long initialBackoffMs = 500;
+
+        /**
+         * Exponential multiplier applied to the retry delay.
+         */
         private double multiplier = 2.0;
+
+        /**
+         * Maximum retry delay in milliseconds.
+         */
         private long maxBackoffMs = 5_000;
 
         public int getMaxAttempts() {
