@@ -1,0 +1,30 @@
+name: Spring Boot Compatibility
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+jobs:
+  compatibility:
+    name: Spring Boot ${{ matrix.spring-boot }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        spring-boot:
+          - 3.3.0
+          - 3.4.0
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+
+      - name: Verify with Spring Boot ${{ matrix.spring-boot }}
+        run: mvn -B clean verify -Dspring.boot.version=${{ matrix.spring-boot }}
