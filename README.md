@@ -6,7 +6,7 @@
 [![Demo](https://img.shields.io/badge/demo-runnable-success)](https://github.com/mathias82/spring-kafka-contract-demo)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 ![Java](https://img.shields.io/badge/Java-21-blue)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3-brightgreen)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3%20%7C%203.4-brightgreen)
 
 **Catch incompatible Kafka schema changes before your Spring Boot application starts serving traffic.**
 
@@ -20,7 +20,7 @@ Add the released starter from Maven Central:
 <dependency>
   <groupId>io.github.mathias82.spring.kafka</groupId>
   <artifactId>spring-kafka-contract-starter</artifactId>
-  <version>0.2.2</version>
+  <version>0.2.3</version>
 </dependency>
 ```
 
@@ -106,7 +106,7 @@ The project is Spring Boot 3 auto-configuration registered through:
 META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports
 ```
 
-Consumers do not need to place their application under the `io.github.mathias82` package or manually import configuration.
+The starter is continuously verified against Spring Boot 3.3 and 3.4 on Java 21. Consumers do not need to place their application under the `io.github.mathias82` package or manually import configuration.
 
 ## Authentication and customization
 
