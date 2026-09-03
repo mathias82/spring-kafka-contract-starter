@@ -28,6 +28,18 @@ public class ContractValidationReport {
         ));
     }
 
+    public void recordRegistryUnavailable(String subject,
+            CompatibilityMode expectedCompatibility,
+            SchemaType schemaType) {
+        subjects.put(subject, new SubjectStatus(
+                subject,
+                "SKIPPED_REGISTRY_UNAVAILABLE",
+                expectedCompatibility,
+                null,
+                schemaType
+        ));
+    }
+
     public List<SubjectStatus> getSubjects() {
         Collection<SubjectStatus> values = subjects.values();
         return values.stream()

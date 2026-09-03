@@ -23,6 +23,8 @@ class KafkaContractConfigurationMetadataTest {
                     .contains("Whether startup contract validation is enabled.")
                     .contains("kafka.contract.registry.url")
                     .contains("Base URL of the Confluent-compatible Schema Registry.")
+                    .contains("kafka.contract.registry.unavailable-policy")
+                    .contains("Startup policy when Schema Registry remains temporarily unavailable after retries.")
                     .contains("kafka.contract.retry.max-attempts")
                     .contains("Maximum number of attempts for transient Schema Registry communication failures.");
         }

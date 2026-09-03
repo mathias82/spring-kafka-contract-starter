@@ -25,6 +25,7 @@ public class KafkaContractEndpoint {
         response.put("enabled", properties.isEnabled());
         response.put("expectedCompatibility", properties.getCompatibility());
         response.put("registryUrl", properties.getRegistry().getUrl());
+        response.put("registryUnavailablePolicy", properties.getRegistry().getUnavailablePolicy());
         response.put("subjects", report.getSubjects());
         return response;
     }

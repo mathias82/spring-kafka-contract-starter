@@ -5,6 +5,7 @@ import io.github.mathias82.spring.kafka.contract.exception.IncompatibleSchemaExc
 import io.github.mathias82.spring.kafka.contract.exception.MissingSchemaException;
 import io.github.mathias82.spring.kafka.contract.exception.SchemaRegistryCommunicationException;
 import io.github.mathias82.spring.kafka.contract.model.CompatibilityMode;
+import io.github.mathias82.spring.kafka.contract.model.RegistryUnavailablePolicy;
 import io.github.mathias82.spring.kafka.contract.model.SchemaSubject;
 import io.github.mathias82.spring.kafka.contract.registry.SchemaRegistryClient;
 import org.slf4j.Logger;
@@ -15,6 +16,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.util.StreamUtils;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 /**
  * Validates Kafka schema contracts at application startup.
@@ -40,8 +42,27 @@ public class StartupSchemaValidator implements ApplicationRunner {
     public void run(ApplicationArguments args) throws Exception {
         CompatibilityMode expectedCompatibility = properties.getCompatibility();
 
-        for (SchemaSubject subject : properties.getSubjects()) {
-            validateWithRetry(subject, expectedCompatibility);
+        List<SchemaSubject> subjects = properties.getSubjects();
+        for (int index = 0; index < subjects.size(); index++) {
+            SchemaSubject subject = subjects.get(index);
+            try {
+                validateWithRetry(subject, expectedCompatibility);
+            } catch (SchemaRegistryCommunicationException ex) {
+                if (!ex.isRetryable()
+                        || properties.getRegistry().getUnavailablePolicy() == RegistryUnavailablePolicy.FAIL) {
+                    throw ex;
+                }
+
+                log.warn("Schema Registry remains unavailable after retries. Skipping startup contract validation "
+                                + "because kafka.contract.registry.unavailable-policy=WARN. Cause: {}",
+                        ex.getMessage());
+                subjects.subList(index, subjects.size()).forEach(skipped ->
+                        report.recordRegistryUnavailable(
+                                skipped.getName(),
+                                expectedCompatibility,
+                                skipped.getSchemaType()));
+                return;
+            }
         }
     }
 
@@ -55,7 +76,7 @@ public class StartupSchemaValidator implements ApplicationRunner {
                 validateSubject(subject, expectedCompatibility);
                 return;
             } catch (SchemaRegistryCommunicationException ex) {
-                if (attempt == maxAttempts) {
+                if (!ex.isRetryable() || attempt == maxAttempts) {
                     throw ex;
                 }
 

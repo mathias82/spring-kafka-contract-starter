@@ -98,16 +98,20 @@ public class ConfluentSchemaRegistryClient implements SchemaRegistryClient {
 
     private SchemaRegistryCommunicationException communicationFailure(String operation, RestClientException ex) {
         String detail = "";
+        boolean retryable = true;
         if (ex instanceof RestClientResponseException responseException) {
             HttpStatus status = HttpStatus.resolve(responseException.getStatusCode().value());
+            int statusCode = responseException.getStatusCode().value();
+            retryable = statusCode == 408 || statusCode == 429 || responseException.getStatusCode().is5xxServerError();
             detail = " (HTTP %d%s)".formatted(
-                    responseException.getStatusCode().value(),
+                    statusCode,
                     status == null ? "" : " " + status.getReasonPhrase()
             );
         }
         return new SchemaRegistryCommunicationException(
                 "Failed to %s against Schema Registry at %s%s".formatted(operation, registryUrl, detail),
-                ex
+                ex,
+                retryable
         );
     }
 }

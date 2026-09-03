@@ -20,7 +20,7 @@ Add the released starter from Maven Central:
 <dependency>
   <groupId>io.github.mathias82.spring.kafka</groupId>
   <artifactId>spring-kafka-contract-starter</artifactId>
-  <version>0.2.3</version>
+  <version>0.2.4</version>
 </dependency>
 ```
 
@@ -52,6 +52,7 @@ Schema Registry protects schema evolution, but applications still need a reliabl
 - **All Confluent compatibility modes**: `NONE`, `BACKWARD`, `BACKWARD_TRANSITIVE`, `FORWARD`, `FORWARD_TRANSITIVE`, `FULL`, `FULL_TRANSITIVE`.
 - **Confluent Cloud / secured registry support** through Basic Auth credentials.
 - **Bounded retry with exponential backoff** for transient registry communication failures.
+- **Configurable registry-outage policy** to fail startup or continue with an observable warning after retries.
 - **Actuator visibility** for contract validation status when Spring Boot Actuator is present.
 - **Overrideable `SchemaRegistryClient`** for custom integrations.
 
@@ -63,8 +64,8 @@ For every configured subject the starter:
 2. resolves compatibility using subject config, then global config, then the configured fallback
 3. compares the effective mode with `kafka.contract.compatibility`
 4. submits the local schema to the Schema Registry compatibility endpoint
-5. retries transient registry communication failures according to the configured policy
-6. fails startup when the contract is missing, incompatible, or the registry remains unavailable
+5. retries transient network failures, HTTP `408`, `429`, and `5xx` responses
+6. applies the configured unavailable-registry policy only after retry exhaustion
 
 Typical failures are surfaced as `MissingSchemaException`, `IncompatibleSchemaException`, or `SchemaRegistryCommunicationException`.
 
@@ -79,6 +80,7 @@ kafka:
       url: ${SCHEMA_REGISTRY_URL}
       connect-timeout-ms: 2000
       read-timeout-ms: 5000
+      unavailable-policy: FAIL
       username: ${SCHEMA_REGISTRY_API_KEY:}
       password: ${SCHEMA_REGISTRY_API_SECRET:}
     retry:
@@ -92,7 +94,7 @@ kafka:
         schema-type: AVRO
 ```
 
-`schema-type` defaults to `AVRO`. Retry is applied only to `SchemaRegistryCommunicationException`; missing subjects and incompatible contracts fail immediately. Set `max-attempts: 1` to disable retries.
+`schema-type` defaults to `AVRO`. `unavailable-policy` defaults to `FAIL`, preserving fail-fast behavior. Set it to `WARN` to continue startup when the registry remains temporarily unavailable after retries; affected subjects are reported as `SKIPPED_REGISTRY_UNAVAILABLE` through Actuator. Missing subjects, incompatible contracts, authentication/authorization failures, and other non-retryable `4xx` responses always fail startup. Set `max-attempts: 1` to disable retries.
 
 ## Actuator
 
@@ -118,11 +120,13 @@ Subject names are URL-encoded before calls are made, and connect/read timeouts a
 
 The companion [spring-kafka-contract-demo](https://github.com/mathias82/spring-kafka-contract-demo) runs Kafka and Confluent Schema Registry and verifies the published Maven Central artifact end to end.
 
-Its CI proves three scenarios:
+Its CI proves five scenarios:
 
 1. baseline v1 starts and completes a real producer → Kafka → consumer round trip
 2. backward-compatible v2 starts successfully
 3. intentionally breaking v3 is rejected during startup
+4. a temporary registry outage allows startup with the `WARN` policy
+5. the same outage rejects startup with the `FAIL` policy
 
 That means the demo exercises both the real Kafka runtime path and the fail-fast contract behavior.
 
