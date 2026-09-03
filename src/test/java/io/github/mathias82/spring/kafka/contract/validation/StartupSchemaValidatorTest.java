@@ -5,6 +5,7 @@ import io.github.mathias82.spring.kafka.contract.exception.IncompatibleSchemaExc
 import io.github.mathias82.spring.kafka.contract.exception.MissingSchemaException;
 import io.github.mathias82.spring.kafka.contract.exception.SchemaRegistryCommunicationException;
 import io.github.mathias82.spring.kafka.contract.model.CompatibilityMode;
+import io.github.mathias82.spring.kafka.contract.model.RegistryUnavailablePolicy;
 import io.github.mathias82.spring.kafka.contract.model.SchemaSubject;
 import io.github.mathias82.spring.kafka.contract.model.SchemaType;
 import io.github.mathias82.spring.kafka.contract.registry.SchemaRegistryClient;
@@ -52,6 +53,7 @@ class StartupSchemaValidatorTest {
 
     @Test
     void failsFastWhenSubjectIsMissing() {
+        properties.getRegistry().setUnavailablePolicy(RegistryUnavailablePolicy.WARN);
         when(client.subjectExists("orders-value")).thenReturn(false);
         assertThrows(MissingSchemaException.class, () -> validator.run(null));
         verify(client, times(1)).subjectExists("orders-value");
@@ -120,5 +122,29 @@ class StartupSchemaValidatorTest {
 
         assertThrows(SchemaRegistryCommunicationException.class, () -> validator.run(null));
         verify(client, times(2)).subjectExists("orders-value");
+    }
+
+    @Test
+    void continuesAndRecordsSkippedStatusWhenRegistryRemainsUnavailableAndPolicyIsWarn() {
+        properties.getRegistry().setUnavailablePolicy(RegistryUnavailablePolicy.WARN);
+        properties.getRetry().setMaxAttempts(2);
+        SchemaRegistryCommunicationException failure =
+                new SchemaRegistryCommunicationException("registry unavailable", new RuntimeException("boom"), true);
+        when(client.subjectExists("orders-value")).thenThrow(failure);
+
+        assertDoesNotThrow(() -> validator.run(null));
+        verify(client, times(2)).subjectExists("orders-value");
+        assertEquals("SKIPPED_REGISTRY_UNAVAILABLE", report.getSubjects().getFirst().status());
+    }
+
+    @Test
+    void warnPolicyDoesNotSuppressNonRetryableRegistryFailures() {
+        properties.getRegistry().setUnavailablePolicy(RegistryUnavailablePolicy.WARN);
+        SchemaRegistryCommunicationException failure =
+                new SchemaRegistryCommunicationException("registry authentication failed", new RuntimeException("boom"), false);
+        when(client.subjectExists("orders-value")).thenThrow(failure);
+
+        assertThrows(SchemaRegistryCommunicationException.class, () -> validator.run(null));
+        verify(client, times(1)).subjectExists("orders-value");
     }
 }

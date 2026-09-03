@@ -1,6 +1,7 @@
 package io.github.mathias82.spring.kafka.contract.autoconfigure;
 
 import io.github.mathias82.spring.kafka.contract.model.CompatibilityMode;
+import io.github.mathias82.spring.kafka.contract.model.RegistryUnavailablePolicy;
 import io.github.mathias82.spring.kafka.contract.model.SchemaSubject;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -96,6 +97,12 @@ public class KafkaContractProperties {
         private int readTimeoutMs = 5_000;
 
         /**
+         * Startup policy when Schema Registry remains temporarily unavailable after retries.
+         * Contract violations and non-retryable HTTP failures always fail startup.
+         */
+        private RegistryUnavailablePolicy unavailablePolicy = RegistryUnavailablePolicy.FAIL;
+
+        /**
          * Optional HTTP Basic authentication username or Confluent Cloud API key.
          */
         private String username;
@@ -127,6 +134,14 @@ public class KafkaContractProperties {
 
         public void setReadTimeoutMs(int readTimeoutMs) {
             this.readTimeoutMs = readTimeoutMs;
+        }
+
+        public RegistryUnavailablePolicy getUnavailablePolicy() {
+            return unavailablePolicy;
+        }
+
+        public void setUnavailablePolicy(RegistryUnavailablePolicy unavailablePolicy) {
+            this.unavailablePolicy = unavailablePolicy == null ? RegistryUnavailablePolicy.FAIL : unavailablePolicy;
         }
 
         public String getUsername() {
