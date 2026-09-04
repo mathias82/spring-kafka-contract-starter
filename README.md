@@ -69,14 +69,9 @@ Confluent's Schema Registry Maven and Gradle plugins are useful in developer and
 | Application startup | Assert the deployed app's expected subjects, compatibility policy, and schema against the target registry | **Primary focus** |
 | Per-message runtime | Validate every Kafka message | Not in scope |
 
-```mermaid
-flowchart LR
-    A[Developer] --> B[Build / CI schema checks]
-    B --> C[Deploy application]
-    C --> D[Startup contract guardrail]
-    D --> E[Confluent Schema Registry]
-    C --> F[Kafka runtime]
-```
+<p align="center">
+  <img src="docs/architecture.svg" alt="Kafka contract enforcement lifecycle" width="100%">
+</p>
 
 The goal is defense in depth: build-time checks catch issues early, while startup validation catches drift between assumptions made during development and the registry state seen by the deployed application.
 
