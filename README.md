@@ -56,6 +56,30 @@ Schema Registry protects schema evolution, but applications still need a reliabl
 - **Actuator visibility** for contract validation status when Spring Boot Actuator is present.
 - **Overrideable `SchemaRegistryClient`** for custom integrations.
 
+## Where it fits
+
+This project complements build-time schema checks; it does not replace them.
+
+Confluent's Schema Registry Maven and Gradle plugins are useful in developer and CI workflows for tasks such as schema registration, compatibility checks, and testing against a registry. This starter addresses a different enforcement point: **application startup in the environment where the application is actually being deployed**.
+
+| Enforcement point | Typical purpose | This starter |
+| --- | --- | --- |
+| Developer / build | Catch schema problems before packaging | Complementary |
+| CI/CD | Validate schemas before promotion | Complementary |
+| Application startup | Assert the deployed app's expected subjects, compatibility policy, and schema against the target registry | **Primary focus** |
+| Per-message runtime | Validate every Kafka message | Not in scope |
+
+```mermaid
+flowchart LR
+    A[Developer] --> B[Build / CI schema checks]
+    B --> C[Deploy application]
+    C --> D[Startup contract guardrail]
+    D --> E[Confluent Schema Registry]
+    C --> F[Kafka runtime]
+```
+
+The goal is defense in depth: build-time checks catch issues early, while startup validation catches drift between assumptions made during development and the registry state seen by the deployed application.
+
 ## What it validates
 
 For every configured subject the starter:
