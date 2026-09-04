@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420" viewBox="0 0 1200 420" role="img" aria-labelledby="title desc">
+  <title id="title">Kafka contract enforcement lifecycle</title>
+  <desc id="desc">Developer changes flow through build and CI checks, deployment, a startup contract guardrail against Confluent Schema Registry, and then Kafka runtime.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#57606a"/>
+    </marker>
+    <style>
+      .box { fill:#ffffff; stroke:#d0d7de; stroke-width:2; rx:14; }
+      .accent { fill:#f6f8fa; stroke:#0969da; stroke-width:2.5; rx:14; }
+      .title { font:600 22px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; fill:#24292f; }
+      .label { font:600 18px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; fill:#24292f; }
+      .small { font:400 14px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; fill:#57606a; }
+      .arrow { stroke:#57606a; stroke-width:2.5; fill:none; marker-end:url(#arrow); }
+    </style>
+  </defs>
+  <rect width="1200" height="420" fill="#ffffff"/>
+  <text x="50" y="55" class="title">Defense-in-depth Kafka contract enforcement</text>
+
+  <rect x="50" y="120" width="185" height="100" class="box"/>
+  <text x="142" y="160" text-anchor="middle" class="label">Developer</text>
+  <text x="142" y="188" text-anchor="middle" class="small">Schema + app change</text>
+
+  <rect x="285" y="120" width="220" height="100" class="box"/>
+  <text x="395" y="160" text-anchor="middle" class="label">Build / CI</text>
+  <text x="395" y="188" text-anchor="middle" class="small">Early schema checks</text>
+
+  <rect x="555" y="120" width="190" height="100" class="box"/>
+  <text x="650" y="160" text-anchor="middle" class="label">Deploy</text>
+  <text x="650" y="188" text-anchor="middle" class="small">Target environment</text>
+
+  <rect x="795" y="100" width="330" height="140" class="accent"/>
+  <text x="960" y="148" text-anchor="middle" class="label">Startup contract guardrail</text>
+  <text x="960" y="178" text-anchor="middle" class="small">Subjects • compatibility policy • local schema</text>
+  <text x="960" y="205" text-anchor="middle" class="small">Blocks readiness when the contract is invalid</text>
+
+  <rect x="795" y="300" width="330" height="80" class="box"/>
+  <text x="960" y="335" text-anchor="middle" class="label">Confluent Schema Registry</text>
+  <text x="960" y="360" text-anchor="middle" class="small">Registry state used by the deployed app</text>
+
+  <rect x="555" y="300" width="190" height="80" class="box"/>
+  <text x="650" y="335" text-anchor="middle" class="label">Kafka runtime</text>
+  <text x="650" y="360" text-anchor="middle" class="small">Normal message flow</text>
+
+  <path d="M235 170 H285" class="arrow"/>
+  <path d="M505 170 H555" class="arrow"/>
+  <path d="M745 170 H795" class="arrow"/>
+  <path d="M960 240 V300" class="arrow"/>
+  <path d="M650 220 V300" class="arrow"/>
+</svg>
